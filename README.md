@@ -1,4 +1,4 @@
-#postnameforth
+# postnameforth
 
 This is a dialect of forth language
 which names each of words after the definion of it's body.
