@@ -41,8 +41,9 @@ static int readword(void)
 typedef struct dict_entry dict_entry;
 struct dict_entry {
     int imm_len;
-    unsigned char *name;
+    void *execution_token;
     dict_entry *prev;
+    unsigned char name[1];
 };
 dict_entry *dictionary;
 #define MEMSIZE (0x10000)
@@ -52,29 +53,29 @@ static int find(int word_length, unsigned char *word_addr,
 		void **execution_token)
 {
     dict_entry *dict = dictionary;
-    while (dict > memory) {
+    while (dict) {
 	int i, len, imm;
-	dict_entry *cur = dict - 1;
-	dict = cur->prev;
-	if (cur->imm_len < 0) {
+	if (dict->imm_len < 0) {
 	    imm = 1;
-	    len = ~cur->imm_len;
+	    len = ~dict->imm_len;
 	} else {
 	    imm = -1;
-	    len = cur->imm_len;
+	    len = dict->imm_len;
 	}
 	if (word_length != len)
 	    goto next;
 	for (i = 0; i < word_length; i++)
-	    if (word_addr[i] != cur->name[i])
+	    if (word_addr[i] != dict->name[i])
 		goto next;
-	*execution_token = dict;
+	*execution_token = dict->execution_token;
 	return imm;
-      next:;
+      next:
+	dict = dict->prev;
     }
     return 0;
 }
-#define PSPBASE (&memory[MEMSIZE])
+/* prepare some margin for stack underflow */
+#define PSPBASE (&memory[MEMSIZE-9])
 register intptr_t tos asm("ebx"), *psp asm("esi");
 //intptr_t tos, *psp;
 static void memcpy(char *dest, const char *src, unsigned int n)
@@ -82,19 +83,15 @@ static void memcpy(char *dest, const char *src, unsigned int n)
     while (n--)
 	*(dest++) = *(src++);
 }
-static void compile_core(char op, void *execution_token)
+static void compile(void *execution_token)
 {
     /* assume x86(32bit) */
     char *dest = here;
     int disp;
-    dest[0] = op;
+    dest[0] = 0xe8;
     here += 5;
     disp = execution_token - here;
     memcpy(dest + 1, &disp, 4);
-}
-static void compile(void *execution_token)
-{
-    compile_core(0xe8, execution_token);
 }
 static void execute(void *execution_token)
 {
@@ -102,11 +99,18 @@ static void execute(void *execution_token)
     (*subroutine) ();
 }
 int postpone;
+static void *end_of_dictionary(void)
+{
+    int len = dictionary->imm_len;
+    if (len < 0)
+	len = ~len;
+    return dictionary->name + len;
+}
 static void reset(char *msg)
 {
     int len;
     for (len = 0; '\0' != msg[len]; len++);
-    here = dictionary;
+    here = end_of_dictionary();
     psp = PSPBASE;
     postpone = 0;
     my_write(1, msg, len);
@@ -116,15 +120,21 @@ static void *alignup_ptr(void *addr)
     intptr_t mask = sizeof(intptr_t) - 1;
     return (void *) ((((intptr_t) addr) + mask) & ~mask);
 }
-static void create(int word_imm, int word_length, unsigned char *word_addr)
+static dict_entry *create_alloc(void)
 {
     dict_entry *dict = alignup_ptr(here);
-    dict->prev = dictionary;
-    dict->name = word_addr;
+    here = dict->name;
+    return dict;
+}
+static void create_fill(dict_entry *dict, void *execution_token,
+			int word_imm, int word_length)
+{
     if (word_imm)
 	word_length = ~word_length;
     dict->imm_len = word_length;
-    here = dictionary = dict + 1;
+    dict->execution_token = execution_token;
+    dict->prev = dictionary;
+    dictionary = dict;
 }
 static void emit_lit(intptr_t lit)
 {
@@ -217,16 +227,20 @@ FORTH(end_emit)
 }
 FORTH(create)
 {
-    unsigned char *word_addr = here;
-    int len = readword();
+    dict_entry *dict;
+    void *execution_token;
+    int len;
+    dict = create_alloc();
+    len = readword();
     here += len;
-    create(0, len, word_addr);
+    /* assume code-field is not aligned. */
+    execution_token = end_of_dictionary();
+    create_fill(dict, execution_token, 0, len);
 }
 FORTH(immediate)
 {
-    dict_entry *dict = dictionary - 1;
-    if (dict->imm_len >= 0)
-	dict->imm_len = ~dict->imm_len;
+    if (dictionary->imm_len >= 0)
+	dictionary->imm_len = ~dictionary->imm_len;
 }
 FORTH(compile_camma)
 {
@@ -274,11 +288,15 @@ FORTH(dump)
 static void init_dictionary_dict_add(int imm, char *c_name,
 				     void *code_addr)
 {
-    /* assume x86(32bit) */
     int len;
-    compile_core(0xe9, code_addr);
-    for (len = 0; '\0' != c_name[len]; len++);
-    create(imm, len, c_name);
+    char *name;
+    dict_entry *dict;
+    dict = create_alloc();
+    name = here;
+    for (len = 0; '\0' != c_name[len]; len++)
+	name[len] = c_name[len];
+    here += len;
+    create_fill(dict, code_addr, imm, len);
 }
 static void init_dictionary(void)
 {
@@ -298,7 +316,8 @@ static void init_dictionary(void)
 void _start(void)
 //int main(void)
 {
-    here = dictionary = memory;
+    here = memory;
+    dictionary = (void *) 0;
     init_dictionary();
     reset("");
     while (1)
