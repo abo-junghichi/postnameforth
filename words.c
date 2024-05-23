@@ -1,6 +1,17 @@
 #include <stdint.h>
 #include <sys/syscall.h>
 register intptr_t tos asm("ebx"), *psp asm("esi");
+static intptr_t pop(void)
+{
+    intptr_t rtn = tos;
+    tos = *(psp++);
+    return rtn;
+}
+static void push(intptr_t item)
+{
+    *--psp = tos;
+    tos = item;
+}
 #define FORTH(name) void f_##name(void)
 FORTH(sub)
 {
@@ -21,8 +32,7 @@ FORTH(add_asm)
 }
 FORTH(lit_template)
 {
-    *--psp = tos;
-    tos = 0x76543210;
+    push(0x76543210);
 }
 FORTH(lit_template_asm)
 {
@@ -32,7 +42,7 @@ FORTH(lit_template_asm)
 static int syscall1(int syscall, int arg1)
 {
     int ret;
-    __asm__ volatile ("int $0x80":"=a"(ret):"a"(syscall),
+    __asm__ volatile ("int $0x80":"=a" (ret):"a"(syscall),
 		      "b"(arg1):"memory");
     return ret;
 }

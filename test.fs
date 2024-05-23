@@ -9,6 +9,11 @@ create ]= immediate
 
 [ postpone 0x c, ]= ,c0x
 
+,c0x b8 ,c0x  01 ,c0x  00 ,c0x 00 ,c0x 00 ( mov $0x1,%eax )
+,c0x 31 ,c0x db ( xor %ebx,%ebx )
+,c0x cd ,c0x 80 ( int $0x80 )
+]= bye
+
 ,c0x 03 ,c0x 1e ( add (%esi),%ebx )
 ,c0x 8d ,c0x 76 ,c0x 04 ( lea 0x4(%esi),%esi )
 ]= add
@@ -19,7 +24,11 @@ create ]= immediate
 ,c0x 89 ,c0x c3 ( mov %eax,%ebx )
 ]= sub
 
-,c0x b8 ,c0x  01 ,c0x  00 ,c0x 00 ,c0x 00 ( mov $0x1,%eax )
-,c0x 31 ,c0x db ( xor %ebx,%ebx )
-,c0x cd ,c0x 80 ( int $0x80 )
-]= bye
+[ 0x f allot ]= codefield
+[ 0x 6 add @ ]= >body
+[ postpone ' postpone does ]= does> immediate
+
+[ ]= variable_code
+[ codefield align does> variable_code 0x 4 allot create ]= variable
+
+variable var
