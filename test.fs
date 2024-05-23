@@ -26,9 +26,32 @@ create ]= immediate
 
 [ 0x f allot ]= codefield
 [ 0x 6 add @ ]= >body
-[ postpone ' postpone does ]= does> immediate
+[ postpone ' postpone literal postpone does ]= does> immediate
 
 [ ]= variable_code
 [ codefield align does> variable_code 0x 4 allot create ]= variable
 
 variable var
+
+var @ .
+.
+0x beef var !
+.
+' var >body @ .
+.
+0x cafe ' var >body !
+.
+var @ .
+.
+
+variable counter_tmp
+[ counter_tmp ! counter_tmp @ @ 0x 1 add counter_tmp @ !
+  counter_tmp @ @ . 
+]= counter_code
+[ codefield align does> counter_code 0x 4 allot create ]= counter
+
+counter co
+
+co . co . co . co .
+0x 0 0x 3 sub ' co >body !
+co . co . co . co . co . co .
