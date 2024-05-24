@@ -1,7 +1,7 @@
 # postnameforth
 
 This is a dialect of forth language
-which names each of words after the definion of it's body.
+which names each of words after the definition of it's body.
 
 There occurs a problem in ordinary forth
 when a word whose name is same with the defining word's one
