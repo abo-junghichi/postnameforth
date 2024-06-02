@@ -1,6 +1,6 @@
 [
  postpone ]
- 0x c3 c, ( x86 "ret" )
+ 0x c3 literal c, ( x86 "ret" )
  create
 ]
 0x c3 c,
@@ -9,7 +9,7 @@ create ]= immediate
 
 [ postpone 0x c, ]= ,c0x
 
-,c0x b8 ,c0x  01 ,c0x  00 ,c0x 00 ,c0x 00 ( mov $0x1,%eax )
+,c0x b8 ,c0x 01 ,c0x  00 ,c0x 00 ,c0x 00 ( mov $0x1,%eax )
 ,c0x 31 ,c0x db ( xor %ebx,%ebx )
 ,c0x cd ,c0x 80 ( int $0x80 )
 ]= bye
@@ -24,12 +24,14 @@ create ]= immediate
 ,c0x 89 ,c0x c3 ( mov %eax,%ebx )
 ]= sub
 
-[ 0x f allot ]= codefield
-[ 0x 6 add @ ]= >body
+[ postpone 0x postpone literal ]= lit0x immediate
+
+[ lit0x f allot ]= codefield
+[ lit0x 6 add @ ]= >body
 [ postpone ' postpone literal postpone does ]= does> immediate
 
 [ ]= variable_code
-[ codefield align does> variable_code 0x 4 allot create ]= variable
+[ codefield align does> variable_code lit0x 4 allot create ]= variable
 
 variable var
 
@@ -45,10 +47,10 @@ var @ .
 .
 
 variable counter_tmp
-[ counter_tmp ! counter_tmp @ @ 0x 1 add counter_tmp @ !
+[ counter_tmp ! counter_tmp @ @ lit0x 1 add counter_tmp @ !
   counter_tmp @ @ . 
 ]= counter_code
-[ codefield align does> counter_code 0x 4 allot create ]= counter
+[ codefield align does> counter_code lit0x 4 allot create ]= counter
 
 counter co
 

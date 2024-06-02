@@ -43,10 +43,7 @@ PRIM(1, "0x", hexread)
 	}
 	rst = (rst << 4) + adder;
     }
-    if (postpone)
-	emit_lit(rst);
-    else
-	push(rst);
+    push(rst);
 }
 PRIM(1, "(", comment) {
     while (1) {
