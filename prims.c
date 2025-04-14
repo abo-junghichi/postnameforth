@@ -60,7 +60,7 @@ PRIM(0, "c,", emit_byte)
 }
 PRIM(0, "here", here)
 {
-    push(here);
+    push((intptr_t) here);
 }
 PRIM(0, "[", begin_emit)
 {
@@ -89,14 +89,14 @@ PRIM(0, "immediate", immediate)
 }
 PRIM(0, "compile,", compile_camma)
 {
-    compile(tos);
+    compile((void *) tos);
     tos = *(psp++);
 }
 PRIM(1, "'", tick)
 {
     void *execution_token;
     if (0 <= tick(here, &execution_token))
-	push(execution_token);
+	push((intptr_t) execution_token);
 }
 PRIM(1, "postpone", postpone)
 {
@@ -120,8 +120,7 @@ PRIM(0, "align", align)
 }
 PRIM(0, "execute", execute)
 {
-    void *xt = pop();
-    execute(xt);
+    execute((void *) pop());
 }
 PRIM(1, "literal", literal)
 {
@@ -134,7 +133,7 @@ PRIM(0, "@", load_cell)
 PRIM(0, "!", store_cell)
 {
     intptr_t *addr, value;
-    addr = tos;
+    addr = (intptr_t *) tos;
     value = psp[0];
     *addr = value;
     tos = psp[1];
@@ -142,10 +141,10 @@ PRIM(0, "!", store_cell)
 }
 PRIM(0, "does", does)
 {
-    void *xt = pop();
+    void *xt = (void *) pop();
     void *here_back = here;
     here = end_of_dictionary();
-    emit_lit(here_back);
+    emit_lit((intptr_t) here_back);
     compile_core(0xe9, xt);
     here = here_back;
 }

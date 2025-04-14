@@ -10,11 +10,11 @@ static int syscall3(int syscall, int arg1, int arg2, int arg3)
 }
 static int readkey(char *buf)
 {
-    return syscall3(SYS_read, 0, buf, 1);
+    return syscall3(SYS_read, 0, (int) buf, 1);
 }
 static int my_write(int fd, const void *buf, size_t count)
 {
-    return syscall3(SYS_write, fd, buf, count);
+    return syscall3(SYS_write, fd, (int) buf, count);
 }
 static void debug(int len, const char *msg)
 {
@@ -71,10 +71,12 @@ static int find(int word_length, unsigned char *word_addr,
     }
     return -1;
 }
-static void memcpy(char *dest, const char *src, unsigned int n)
+static void memcpy(void *dest, const void *src, unsigned int n)
 {
+    char *d = dest;
+    const char *s = src;
     while (n--)
-	*(dest++) = *(src++);
+	*d++ = *s++;
 }
 static void compile_core(char op, void *execution_token)
 {
@@ -178,7 +180,7 @@ static void interpret(void)
     if (0 <= rst)
 	switch (postpone - rst) {
 	case 2:
-	    emit_lit(execution_token);
+	    emit_lit((intptr_t) execution_token);
 	    execution_token = f_compile_camma;
 	    /* fall through */
 	case 1:
