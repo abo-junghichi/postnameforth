@@ -45,6 +45,7 @@ struct dict_entry {
     unsigned char name[1];
 };
 dict_entry *dictionary;
+void *execution_token_start;
 #define MEMSIZE (0x10000)
 /* assume memory[] is readable-writable-executable. */
 intptr_t memory[MEMSIZE];
@@ -158,7 +159,7 @@ static void reset(char *msg)
 {
     int len;
     for (len = 0; '\0' != msg[len]; len++);
-    here = end_of_dictionary();
+    here = execution_token_start = end_of_dictionary();
     psp = PSPBASE;
     postpone = 0;
     my_write(1, msg, len);

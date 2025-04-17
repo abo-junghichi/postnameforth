@@ -73,14 +73,13 @@ PRIM(1, "]", end_emit)
 PRIM(0, "create", create)
 {
     dict_entry *dict;
-    void *execution_token;
     int len;
     dict = create_alloc();
     len = readword(here);
     here += len;
     /* assume code-field is not aligned. */
-    execution_token = end_of_dictionary();
-    create_fill(dict, execution_token, 0, len);
+    create_fill(dict, execution_token_start, 0, len);
+    execution_token_start = end_of_dictionary();
 }
 PRIM(0, "immediate", immediate)
 {
@@ -139,12 +138,19 @@ PRIM(0, "!", store_cell)
     tos = psp[1];
     psp += 2;
 }
+PRIM(0, "get_body", get_body)
+{
+    intptr_t body;
+  asm("mov 0x4(%%esp),%0\n":"=r"(body));
+    push(body + 1 /* length of "ret" */ );
+}
 PRIM(0, "does", does)
 {
     void *xt = (void *) pop();
     void *here_back = here;
-    here = end_of_dictionary();
-    emit_lit((intptr_t) here_back);
-    compile_core(0xe9, xt);
+    here -= 6;
+    execution_token_start = here;
+    compile_core(0xe8, xt);
+    *(char *) here = 0xc3 /* ret */ ;
     here = here_back;
 }

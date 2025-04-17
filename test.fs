@@ -26,11 +26,12 @@ create ]= immediate
 
 [ postpone 0x postpone literal ]= lit0x immediate
 
-[ lit0x f allot ]= codefield
-[ lit0x 6 add @ ]= >body
+[ lit0x 6 allot ]= codefield
+[ lit0x 6 add ]= >body
 [ postpone ' postpone literal postpone does ]= does> immediate
+[ [ postpone get_body ]= [action
 
-[ ]= variable_code
+[action ]= variable_code
 [ codefield align does> variable_code lit0x 4 allot create ]= variable
 
 variable var
@@ -47,7 +48,7 @@ var @ .
 .
 
 variable counter_tmp
-[ counter_tmp ! counter_tmp @ @ lit0x 1 add counter_tmp @ !
+[action counter_tmp ! counter_tmp @ @ lit0x 1 add counter_tmp @ !
   counter_tmp @ @ . 
 ]= counter_code
 [ codefield align does> counter_code lit0x 4 allot create ]= counter
