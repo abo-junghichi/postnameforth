@@ -79,19 +79,15 @@ static void memcpy(void *dest, const void *src, unsigned int n)
     while (n--)
 	*d++ = *s++;
 }
-static void compile_core(char op, void *execution_token)
+static void compile(void *execution_token)
 {
     /* assume x86(32bit) */
     char *dest = here;
     int disp;
-    dest[0] = op;
+    dest[0] = 0xe8;
     here += 5;
     disp = execution_token - here;
     memcpy(dest + 1, &disp, 4);
-}
-static void compile(void *execution_token)
-{
-    compile_core(0xe8, execution_token);
 }
 static void execute(void *execution_token)
 {

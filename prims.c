@@ -150,7 +150,7 @@ PRIM(0, "does", does)
     void *here_back = here;
     here -= 6;
     execution_token_start = here;
-    compile_core(0xe8, xt);
+    compile(xt);
     *(char *) here = 0xc3 /* ret */ ;
     here = here_back;
 }
